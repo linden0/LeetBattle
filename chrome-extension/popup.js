@@ -1,18 +1,31 @@
-const savedScreens = ["enter-code", "room", "room-expired"];
+const savedScreens = ["enter-code", "room", "room-expired", "waiting-room"];
 
 document.addEventListener('DOMContentLoaded', function () {
     // implement back button
     const backButtons = document.getElementsByClassName('back-btn');
     for (let i = 0; i < backButtons.length; i++) {
         backButtons[i].addEventListener('click', function () {
+            
+            // if on enter code page, send message to background.js to delete room
+            if (document.getElementById('enter-code').style.display === 'block') {
+                chrome.runtime.sendMessage({ message: 'cancel-search' });
+            }
+            // clear storage
+            chrome.storage.sync.clear();
             showScreen('home');
         });
     }
 
     // when id="test-btn" is clicked, fetch to localhost:3000/test
-    document.getElementById('test-btn').addEventListener('click', async () => {
-        fetch('http://localhost:3000/test') 
+    document.getElementById('test-btn1').addEventListener('click', async () => {
         chrome.storage.sync.clear();
+    });
+
+    document.getElementById('test-btn2').addEventListener('click', async () => {
+        fetch('http://localhost:3000/test')
+            .then(res => res.json())
+            .then(data => console.log(data))
+            .catch(err => console.log(err));
     });
     
     document.getElementById('visit-create-room-btn').addEventListener('click', function () {
@@ -92,6 +105,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     })
 
+    document.getElementById('cancel-search').addEventListener('click', function () {
+        showScreen('home');
+        // clear storage
+        chrome.storage.sync.clear();
+        // send message to background.js
+        chrome.runtime.sendMessage({message: 'cancel-search'});
+    });
+
+
     renderScreens();
     
 });
@@ -114,13 +136,8 @@ function renderScreens() {
             // show enter code screen
             showScreen('enter-code');
         }
-        else if (result['screen-name'] === 'room') {
-            // show room screen
-            showScreen('room');
-        }
-        else if (result['screen-name'] === 'room-expired') {
-            // show room expired screen
-            showScreen('room-expired');
+        else {
+            showScreen(result['screen-name']);
         }
     });
 }

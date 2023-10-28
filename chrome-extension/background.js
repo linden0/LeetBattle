@@ -1,11 +1,11 @@
 let webSocket = null;
 let roomID = null;
 
-
+// connect to websocket server
 function connect(message) {
   webSocket = new WebSocket('ws://localhost:3000');
 
-  webSocket.onopen = (event) => {
+  webSocket.onopen = () => {
     console.log('websocket open');
     keepAlive();
     if (message) {
@@ -15,8 +15,10 @@ function connect(message) {
 
   webSocket.onmessage = (event) => {
     const response = JSON.parse(event.data);
+
     // if message.status is game-start, start match
     if (response.status === 'game-start') {
+      // update roomID variable
       if (response.roomID) {
         roomID = response.roomID;
       }
@@ -25,12 +27,10 @@ function connect(message) {
         // Wait for the new tab to be fully loaded
         chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, tab) {
           if (tabId === newTab.id && changeInfo.status === 'complete') {
-            // The new tab has finished loading, so it's safe to send the message now
+            // message content script to start listening for correct submission
             chrome.tabs.sendMessage(newTab.id, { message: 'game-start' });
-            
             // Tell popup.js to show room screen
             chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
-
             // Remove the listener to avoid sending the message multiple times
             chrome.tabs.onUpdated.removeListener(listener);
           }
@@ -38,21 +38,25 @@ function connect(message) {
       });
       
     }
-    // if message.status is return-code
+
     if (response.status === 'return-code') {
       // update roomID variable
       roomID = response.roomID;
-      // send code to popup.js
-      chrome.runtime.sendMessage({ message: 'return-code', roomID: response.roomID });
+      if (response.displayCode) {
+        // send code to popup.js
+        chrome.runtime.sendMessage({ message: 'return-code', roomID: response.roomID });
+      }
     }
-    // if message.status is game-won
+
     if (response.status === 'game-won') {
+      console.log('here')
       chrome.storage.sync.clear();
       // disconnect from server
       disconnect();
       // show you lose screen
       chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=false') });
     }
+
     if (response.status === 'game-lost') {
       chrome.storage.sync.clear();
       // disconnect from server
@@ -60,9 +64,10 @@ function connect(message) {
       // show you win screen
       chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=true') });
     }
+
     if (response.status === 'room-expired') {
       roomID = null;
-      // check if popup is running
+      // show room expired screen if popup is open, otherwise save screen to storage
       try {
         chrome.runtime.sendMessage({ message: 'room-expired' });
       }
@@ -116,13 +121,12 @@ function sendMessage(message) {
 // receive message from popup.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === 'create-room') {
-    console.log('creating room')
     sendMessage({ status: 'create-room', difficulty: request.difficulty });
 
   }
   if (request.message === 'join-room') {
     roomID = request.roomID;
-    sendMessage({ status: 'join-room', roomID: request.roomID });
+    sendMessage({ status: 'join-room', roomID });
   }
   if (request.message === 'game-won') {
     // open result page
@@ -139,5 +143,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   if (request.message === 'play-online') {
     sendMessage({status: 'play-online', difficulty: request.difficulty});
+  }
+  if (request.message === 'cancel-search') {
+    sendMessage({status: 'cancel-search', roomID});
+    roomID = null;
+    disconnect();
   }
 });
