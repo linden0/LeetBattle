@@ -1,0 +1,27 @@
+{
+  "name": "LeetBattle",
+  "description": "Fully functional, useful bare minimum Google Chrome extension boilerplate [Manifest V3].",
+  "homepage_url": "https://github.com/llagerlof/fresh-chrome-extension",
+  "version": "2.0.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "minimum_chrome_version": "116",
+  "content_scripts": [{
+    "matches": ["https://leetcode.com/*"],
+    "js": ["content.js"]}
+],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*"
+  ]
+}
