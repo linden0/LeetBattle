@@ -1,0 +1,32 @@
+
+#create-room {
+    display: none;
+}
+
+#join-room {
+    display: none;
+}
+
+#enter-code {
+    display: none;
+}
+
+#room {
+    display: none;
+}
+
+#room-expired {
+    display: none;
+}
+
+#your-opponent-left {
+    display: none;
+}
+
+#play-online {
+    display: none;
+}
+
+#waiting-room {
+    display: none;
+}
