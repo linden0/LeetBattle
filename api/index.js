@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || "8080";
 const fs = require('fs');
 const csv = require('csv-parser');
 const redis = require('redis');

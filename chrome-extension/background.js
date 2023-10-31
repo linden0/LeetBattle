@@ -3,7 +3,7 @@ let roomID = null;
 
 // connect to websocket server
 function connect(message) {
-  webSocket = new WebSocket('ws://localhost:3000');
+  webSocket = new WebSocket('wss://leet-battle.fly.dev');
 
   webSocket.onopen = () => {
     console.log('websocket open');
@@ -22,20 +22,27 @@ function connect(message) {
       if (response.roomID) {
         roomID = response.roomID;
       }
+      // store url in storage
+      chrome.storage.sync.set({ 'url': response.url });
       // open up a problem tab
-      chrome.tabs.create({ url: response.url }, (newTab) => {
-        // Wait for the new tab to be fully loaded
-        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, tab) {
-          if (tabId === newTab.id && changeInfo.status === 'complete') {
-            // message content script to start listening for correct submission
-            chrome.tabs.sendMessage(newTab.id, { message: 'game-start' });
-            // Tell popup.js to show room screen
-            chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
-            // Remove the listener to avoid sending the message multiple times
-            chrome.tabs.onUpdated.removeListener(listener);
-          }
-        });
-      });
+      chrome.tabs.create({ url: response.url });
+      // Tell popup.js to show room screen
+      chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
+
+      // // open up a problem tab
+      // chrome.tabs.create({ url: response.url }, (newTab) => {
+      //   // Wait for the new tab to be fully loaded
+      //   chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, tab) {
+      //     if (tabId === newTab.id && changeInfo.status === 'complete') {
+      //       // message content script to start listening for correct submission
+      //       chrome.tabs.sendMessage(newTab.id, { message: 'game-start' });
+      //       // Tell popup.js to show room screen
+      //       chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
+      //       // Remove the listener to avoid sending the message multiple times
+      //       chrome.tabs.onUpdated.removeListener(listener);
+      //     }
+      //   });
+      // });
       
     }
 
@@ -49,12 +56,12 @@ function connect(message) {
     }
 
     if (response.status === 'game-won') {
-      console.log('here')
       chrome.storage.sync.clear();
       // disconnect from server
       disconnect();
       // show you lose screen
       chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=false') });
+      roomID = null;
     }
 
     if (response.status === 'game-lost') {
@@ -63,6 +70,7 @@ function connect(message) {
       disconnect();
       // show you win screen
       chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=true') });
+      roomID = null;
     }
 
     if (response.status === 'room-expired') {
@@ -129,6 +137,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendMessage({ status: 'join-room', roomID });
   }
   if (request.message === 'game-won') {
+    if (!roomID) {
+      return;
+    }
     // open result page
     chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=true') });
     sendMessage({ status: 'game-won', roomID });
