@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "begin": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +14,7 @@
     "csv-parser": "^3.0.0",
     "express": "^4.18.2",
     "fs": "0.0.1-security",
+    "nodemailer": "^6.9.7",
     "redis": "^4.6.10",
     "socket.io": "^4.7.2",
     "ws": "^8.14.2"

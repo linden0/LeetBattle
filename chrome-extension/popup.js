@@ -1,3 +1,8 @@
+const ENVIRONMENT = 'development';
+const DEV_API_URL = 'http://localhost:8080';
+const PROD_API_URL = 'https://leet-battle.fly.dev';
+const API_URL = ENVIRONMENT === 'development' ? DEV_API_URL : PROD_API_URL;
+
 const savedScreens = ["enter-code", "room", "room-expired", "waiting-room"];
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -59,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         // validate room code
-        fetch(`https://leet-battle.fly.dev/validate-room-code?roomCode=${roomID}`)
+        fetch(`${API_URL}/validate-room-code?roomCode=${roomID}`)
             .then(res => res.json())
             .then(data => {
                 console.log('here')
