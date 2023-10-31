@@ -1,9 +1,14 @@
+const ENVIRONMENT = 'development';
+const DEV_WEBSOCKET_URL = 'ws://localhost:8080';
+const PROD_WEBSOCKET_URL = 'wss://leet-battle.fly.dev';
+const WEBSOCKET_URL = ENVIRONMENT === 'development' ? DEV_WEBSOCKET_URL : PROD_WEBSOCKET_URL;
+
 let webSocket = null;
 let roomID = null;
 
 // connect to websocket server
 function connect(message) {
-  webSocket = new WebSocket('wss://leet-battle.fly.dev');
+  webSocket = new WebSocket(WEBSOCKET_URL);
 
   webSocket.onopen = () => {
     console.log('websocket open');

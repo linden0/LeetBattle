@@ -11,12 +11,13 @@ const client = redis.createClient({
         port: 18576
     }
 });
-
+const nodemailer = require('nodemailer');
 client.on('error', (err) => {
   console.error(`Redis error: ${err}`);
 });
 
 const WebSocket = require('ws');
+const { send } = require('process');
 const server = app.listen(port, () => {
   client.connect().then(() => {
     console.log('Connected to Redis');
@@ -24,6 +25,28 @@ const server = app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 const wss = new WebSocket.Server({ server });
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: '***REMOVED***',
+      pass: '***REMOVED***'
+  },
+});
+
+function sendSMS() {
+  const mailOptions = {
+    from: 'career-sample.com@gmail.om',
+    to: '***REMOVED***',
+    subject: 'Alert',
+    text: 'A user entered leetbattle matchmaking',
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log(error);
+    }
+  });
+}
 
 function generateRandomCode() {
   LENGTH = 6
@@ -130,6 +153,7 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.status === 'play-online') {
+        sendSMS();
         const difficulties = new Set(msg.difficulty);
         // find a valid room to join
         for (const [key, value] of rooms) {
