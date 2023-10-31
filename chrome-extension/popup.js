@@ -17,16 +17,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // when id="test-btn" is clicked, fetch to localhost:3000/test
-    document.getElementById('test-btn1').addEventListener('click', async () => {
-        chrome.storage.sync.clear();
-    });
+    // document.getElementById('test-btn1').addEventListener('click', async () => {
+    //     chrome.storage.sync.clear();
+    // });
 
-    document.getElementById('test-btn2').addEventListener('click', async () => {
-        fetch('http://localhost:3000/test')
-            .then(res => res.json())
-            .then(data => console.log(data))
-            .catch(err => console.log(err));
-    });
+    // document.getElementById('test-btn2').addEventListener('click', async () => {
+    //     fetch('https://leet-battle.fly.dev/test')
+    //         .then(res => res.json())
+    //         .then(data => console.log(data))
+    //         .catch(err => console.log(err));
+    // });
     
     document.getElementById('visit-create-room-btn').addEventListener('click', function () {
         showScreen('create-room');
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         // validate room code
-        fetch(`http://localhost:3000/validate-room-code?roomCode=${roomID}`)
+        fetch(`https://leet-battle.fly.dev/validate-room-code?roomCode=${roomID}`)
             .then(res => res.json())
             .then(data => {
                 console.log('here')
@@ -166,7 +166,6 @@ function closeScreens() {
     document.getElementById('enter-code').style.display = "none";
     document.getElementById('room').style.display = "none";
     document.getElementById('room-expired').style.display = "none";
-    document.getElementById('your-opponent-left').style.display = "none";
     document.getElementById('play-online').style.display = "none";
     document.getElementById('waiting-room').style.display = "none";
 }

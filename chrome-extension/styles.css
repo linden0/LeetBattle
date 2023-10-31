@@ -30,3 +30,18 @@
 #waiting-room {
     display: none;
 }
+
+#app {
+    width: 200px;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+}
+
+p {
+    margin: 0;
+}
