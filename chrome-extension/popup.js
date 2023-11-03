@@ -1,11 +1,18 @@
-const ENVIRONMENT = 'development';
-const DEV_API_URL = 'http://localhost:8080';
+const ENVIRONMENT = 'production';
+const DEV_API_URL = 'http://localhost:3000';
 const PROD_API_URL = 'https://leet-battle.fly.dev';
 const API_URL = ENVIRONMENT === 'development' ? DEV_API_URL : PROD_API_URL;
 
 const savedScreens = ["enter-code", "room", "room-expired", "waiting-room"];
 
 document.addEventListener('DOMContentLoaded', function () {
+    //implement copy code button
+    document.getElementById('copy-code-btn').addEventListener('click', function () {
+        const code = document.getElementById('room-code-display').value;
+        navigator.clipboard.writeText(code);
+    });
+
+
     // implement back button
     const backButtons = document.getElementsByClassName('back-btn');
     for (let i = 0; i < backButtons.length; i++) {
@@ -42,15 +49,23 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     
     document.getElementById('create-room-btn').addEventListener('click', function () {
-        // get difficulty from dropdown
-        const difficulty = document.getElementById('difficulty-select').value;
         // validate difficulty
-        if (difficulty === '') {
-            alert('Please select a difficulty');
+        const difficultyCheckboxContainer = document.getElementById('create-room-difficulty-checkbox');
+        const selections = [];
+        for (let i = 0; i < difficultyCheckboxContainer.children.length; i++) {
+            const child = difficultyCheckboxContainer.children[i];
+            if (child.children[0].checked) {
+                selections.push(child.children[0].value);
+            }
+        }
+        if (selections.length === 0) {
+            alert('Please select at least one difficulty, or all if no preference')
             return;
         }
+
+
         // send message to background.js
-        chrome.runtime.sendMessage({ message: 'create-room', difficulty });
+        chrome.runtime.sendMessage({ message: 'create-room', difficulty: selections });
         // show enter code screen
         showScreen('enter-code');
     })
@@ -92,15 +107,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('find-match-btn').addEventListener('click', function () {
         // validate difficulty
-        const difficultyCheckboxContainer = document.getElementById('difficulty-checkbox');
+        const difficultyCheckboxContainer = document.getElementById('play-online-difficulty-checkbox');
         const selections = [];
         for (let i = 0; i < difficultyCheckboxContainer.children.length; i++) {
             const child = difficultyCheckboxContainer.children[i];
-            if (child.checked) {
-                selections.push(child.value);
+            if (child.children[0].checked) {
+                selections.push(child.children[0].value);
             }
         }
-        if (!selections) {
+        if (selections.length === 0) {
             alert('Please select at least one difficulty, or all if no preference')
             return;
         }
@@ -137,7 +152,7 @@ function renderScreens() {
         else if (result['screen-name'] === 'enter-code') {
             
             // display code
-            document.getElementById('room-code-display').innerHTML = result['code'];
+            document.getElementById('room-code-display').value = result['code'];
             // show enter code screen
             showScreen('enter-code');
         }
@@ -155,7 +170,7 @@ function showScreen(screen) {
     if (savedScreens.includes(screen)) {
         const screenObj = (screen === 'enter-code') ? {
             "screen-name": screen,
-            "code": document.getElementById('room-code-display').innerHTML
+            "code": document.getElementById('room-code-display').value
         } : {
             "screen-name": screen
         };
@@ -178,7 +193,7 @@ function closeScreens() {
 // listen for message from background.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.message === 'return-code') {
-        document.getElementById('room-code-display').innerHTML = request.roomID;
+        document.getElementById('room-code-display').value = request.roomID;
         showScreen('enter-code');
     }
     if (request.message === 'game-start') {

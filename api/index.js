@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || "8080";
+const port = process.env.PORT || 3000;
 const fs = require('fs');
 const csv = require('csv-parser');
 const redis = require('redis');
@@ -85,7 +85,7 @@ wss.on('connection', (ws) => {
           roomID = generateRandomCode();
         }
         // map room id to set containing ws
-        rooms.set(roomID, { difficulty: new Set([msg.difficulty]), private: true, members: new Set([ws]) });
+        rooms.set(roomID, { difficulty: new Set(msg.difficulty), private: true, members: new Set([ws]) });
         // send room id to client
         ws.send(JSON.stringify({ status: 'return-code', roomID, displayCode: true }));
         // delete room after 5 minutes, if room is not full
