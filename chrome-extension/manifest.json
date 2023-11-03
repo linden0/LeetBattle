@@ -1,6 +1,6 @@
 {
   "name": "LeetBattle",
-  "description": "Fully functional, useful bare minimum Google Chrome extension boilerplate [Manifest V3].",
+  "description": "1v1 LeetCode battles against your friends to improve your coding skills fast!",
   "homepage_url": "https://github.com/llagerlof/fresh-chrome-extension",
   "version": "2.0.0",
   "manifest_version": 3,
@@ -16,11 +16,15 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "tabs",
     "storage"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
     "https://leet-battle.fly.dev/*"
-  ]
+  ],
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  }
 }

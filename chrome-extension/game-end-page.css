@@ -1,0 +1,40 @@
+body {
+    background-color: #4995C7;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+html {
+    padding: 0;
+    margin: 0;
+}
+
+.lose-screen {
+    width: 100vw;
+    height: 100vh;
+    background-image: url("./img/eliminated.jpg");
+}
+
+@font-face {
+    font-family: 'Burbank';
+    src: url(fortnite.otf);
+}
+
+h2 {
+    font-family: 'Burbank';
+    font-size: 100px;
+    margin: 0;
+    color: white;
+}
+
+p {
+    font-family: 'Burbank';
+    font-size: 50px;
+    margin: 0;
+    color: white;
+}
+.message-wrapper {
+    text-align: center;
+    margin-top: 10%;
+}

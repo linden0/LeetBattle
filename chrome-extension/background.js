@@ -1,5 +1,5 @@
-const ENVIRONMENT = 'development';
-const DEV_WEBSOCKET_URL = 'ws://localhost:8080';
+const ENVIRONMENT = 'production';
+const DEV_WEBSOCKET_URL = 'ws://localhost:3000';
 const PROD_WEBSOCKET_URL = 'wss://leet-battle.fly.dev';
 const WEBSOCKET_URL = ENVIRONMENT === 'development' ? DEV_WEBSOCKET_URL : PROD_WEBSOCKET_URL;
 
@@ -158,6 +158,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     disconnect();
   }
   if (request.message === 'play-online') {
+    console.log({status: 'play-online', difficulty: request.difficulty})
     sendMessage({status: 'play-online', difficulty: request.difficulty});
   }
   if (request.message === 'cancel-search') {

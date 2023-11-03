@@ -1,3 +1,7 @@
+@font-face {
+    font-family: 'Burbank';
+    src: url(fortnite.otf);
+}
 
 #create-room {
     display: none;
@@ -31,6 +35,10 @@
     display: none;
 }
 
+body {
+    background-color: #4995C7;
+}
+
 #app {
     width: 200px;
 }
@@ -44,4 +52,91 @@
 
 p {
     margin: 0;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
 }
+
+h2 {
+    font-family: 'Burbank';
+    font-size: 30px;
+    margin: 0;
+    color: white;
+}
+
+.primary-btn {
+    background-color: #EDD83D;
+    font-family: 'Burbank';
+    font-size: 20px;
+    cursor: pointer;
+    border: 5px solid #F5F27A; 
+}
+.primary-btn:hover {
+    background-color: #c0be5a;
+}
+
+.secondary-btn {
+    background-color: #4D6D9D;
+    font-family: 'Burbank';
+    font-size: 20px;
+    cursor: pointer;
+    border: 5px solid #77A7D8; 
+    color: white;
+}
+
+.secondary-btn:hover {
+    background-color: #3b5578;
+}
+
+.back-btn {
+    background-color: #4D6D9D;
+    font-family: 'Burbank';
+    font-size: 20px;
+    cursor: pointer;
+    border: 5px solid #77A7D8; 
+    color: white;
+}
+
+input:focus {
+    outline: none;
+}
+input[type="text"] {
+    border: none;
+}
+
+input[type="checkbox"] {
+    outline: none;
+}
+
+#room-code-display {
+    border: 3px solid #01C3FE;
+    background-color: #0086E7;
+    width: calc(100% - 20px);
+    color: white;
+    font-weight: bold;
+}
+
+#copy-code-btn {
+    background-color: #0086E7;
+    border: 2px solid #01C3FE;
+    cursor: pointer;
+
+}
+#copy-code-btn:hover {
+    background-color: #0069b4;
+}
+
+.loader {
+    margin: auto;
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #4995C7; /* Blue */
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 2s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }

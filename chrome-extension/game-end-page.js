@@ -2,9 +2,13 @@ const params = new URLSearchParams(location.search);
 const isWin = params.get('status');
 
 if (isWin === 'true') {
-    document.getElementById('verdict').innerHTML = 'You Win!';
-    document.getElementById('message').innerHTML = 'Calm and collected. You might work for Google some day!';
+    document.getElementById('container').innerHTML = `<img draggable="false" src="img/victory-royale.jpg" alt="leetbattle" style="position: absolute; top: 0; left: 0; width: 100%; height: 100vh; object-fit: cover; object-position: center;">`
 } else {
-    document.getElementById('verdict').innerHTML = 'You Lose!';
-    document.getElementById('message').innerHTML = 'Looks like you need to brush up on your leetcode skills.';
+    document.getElementById('container').innerHTML = 
+    `<div class="lose-screen">
+    <div class="message-wrapper">
+      <h2>Eliminated</h2>
+      <p>Looks like you need to brush up on your LeetCode skills!</p>
+    </div>
+  </div>`
 }

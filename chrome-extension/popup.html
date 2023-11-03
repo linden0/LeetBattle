@@ -11,21 +11,34 @@
         <button id="test-btn2">Show rooms</button> -->
         <div id="home">
             <div class="wrapper">
-                <button id="visit-create-room-btn">Create Room</button>
-                <button id="visit-join-room-btn">Join Room</button>
-                <button id="visit-play-online-btn">Play Online</button>
+                <div style="display: flex;">
+                    <img src="img/battle.png" alt="leetbattle" style="width: 30px;">
+                    <h2>LeetBattle</h2>
+                </div>
+                <button id="visit-create-room-btn" class="secondary-btn">Create Room</button>
+                <button id="visit-join-room-btn" class="secondary-btn">Join Room</button>
+                <button id="visit-play-online-btn" class="primary-btn">Play Online</button>
             </div>
         </div>
 
         <div id="play-online">
             <div class="wrapper">
-                <p>Filter</p>
-                <div id="difficulty-checkbox">
-                    <input type="checkbox" value="Easy">Easy</input>
-                    <input type="checkbox" value="Medium">Medium</input>
-                    <input type="checkbox" value="Hard">Hard</input>
+                <h2>Choose Difficulty</h2>
+                <div id="play-online-difficulty-checkbox" style="display: flex;justify-content: space-between;">
+                    <label style="display: flex;align-items: center;color: white;font-weight: bold;">
+                        Easy
+                        <input type="checkbox" value="Easy">
+                    </label>
+                    <label style="display: flex;align-items: center;color: white;font-weight: bold;">
+                        Medium
+                        <input type="checkbox" value="Medium">
+                    </label>
+                    <label style="display: flex;align-items: center;color: white;font-weight: bold;">
+                        Hard
+                        <input type="checkbox" value="Hard">
+                    </label>
                 </div>
-                <button id="find-match-btn">Find Match</button>
+                <button id="find-match-btn" class="primary-btn">Find Match</button>
                 <button class="back-btn">Back</button>
             </div>
             
@@ -34,15 +47,23 @@
 
         <div id="create-room">
             <div class="wrapper">
-                <p style="margin-bottom: 0;">Filter</p>
-                <select id="difficulty-select">
-                    <option value="">--Select problem difficulty--</option>
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                </select>
+                <h2>Choose Difficulty</h2>
+                <div id="create-room-difficulty-checkbox" style="display: flex;justify-content: space-between;">
+                    <label style="display: flex;align-items: center;color: white;font-weight: bold;">
+                        Easy
+                        <input type="checkbox" value="Easy">
+                    </label>
+                    <label style="display: flex;align-items: center;color: white;font-weight: bold;">
+                        Medium
+                        <input type="checkbox" value="Medium">
+                    </label>
+                    <label style="display: flex;align-items: center;color: white;font-weight: bold;">
+                        Hard
+                        <input type="checkbox" value="Hard">
+                    </label>
+                </div>
                 
-                <button id="create-room-btn">Create</button>
+                <button id="create-room-btn" class="primary-btn">Create</button>
                 <button class="back-btn">Back</button>
             </div>
             
@@ -50,19 +71,26 @@
 
         <div id="join-room">
             <div class="wrapper">
-                <p>Room Code</p>
+                <h2>Enter Match Code</h2>
                 <input type="text" id="room-code">
-                <button id="join-room-btn">Join</button>
-                <button class="back-btn">Back</button>
+                <div style="display: flex;">
+                    <button id="join-room-btn" class="primary-btn">Join</button>
+                    <button class="back-btn">Back</button>
+                </div>
+                
             </div>
             
         </div>
 
         <div id="enter-code">
             <div class="wrapper">
-                <p>Your code is</p>
-                <p id="room-code-display"></p>
-                <p>Get ready! As soon as the other player joins, you'll be redirected to leetcode and the game will begin.</p>
+                <h2>Match Code</h2>
+                <div style="display: flex;">
+                    <input readonly id="room-code-display"></input>
+                    <button id="copy-code-btn"><img src="img/copy.png" alt="leetbattle" style="width: 15px;"></button>
+                </div>
+                <h2>Get ready!</h2>
+                <p> As soon as the other player joins, you'll be redirected to leetcode and the game will begin.</p>
                 <button class="back-btn">Back</button>
             </div>
             
@@ -70,15 +98,15 @@
 
         <div id="room">
             <div class="wrapper">
-                <p>Game is in progress</p>
-                <button id="forfeit">Forfeit</button>
+                <h2>Game In Progress</h2>
+                <button id="forfeit" class="secondary-btn">Forfeit</button>
             </div>
             
         </div>
 
         <div id="room-expired">
             <div class="wrapper">
-                <p>Room has expired</p>
+                <h2>Room Expired</h2>
                 <button class="back-btn">Back</button>
             </div>
             
@@ -87,9 +115,9 @@
 
         <div id="waiting-room">
             <div class="wrapper">
-                <p>Searching for a match ...</p>
-                <button id="cancel-search">Cancel</button>     
-            </div>
+                <h2 style="text-align: center;">Searching for a match <div class="loader"></div></h2>
+                <button id="cancel-search" class="secondary-btn">Cancel</button>     
+            </span<>
 
         </div>
     </div>
