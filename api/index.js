@@ -34,12 +34,12 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-function sendSMS() {
+function sendSMS(message) {
   const mailOptions = {
     from: 'career-sample.com@gmail.om',
     to: 'linden.wang04@gmail.com',
     subject: 'Alert',
-    text: 'A user entered leetbattle matchmaking',
+    text: message,
   };
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
@@ -91,7 +91,6 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.status === 'create-room') {
-        console.log('crating room')
         // create room id using uuid
         let roomID = generateRandomCode();
         while (rooms.get(roomID)) {
@@ -112,7 +111,8 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.status === 'join-room') {
-        console.log('joining room')
+        console.log('Starting Private Match')
+        sendSMS('Starting Private Match');
         // get room id from client
         const roomID = msg.roomID;
         // add ws to set mapped to room id
@@ -134,8 +134,8 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.status === 'game-won') {
-        console.log('game won')
-        console.log(msg.roomID)
+        console.log('Game Won')
+        sendSMS('Game Won')
         // get room id from client
         const roomID = msg.roomID;
         // get ws from map
@@ -166,7 +166,7 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.status === 'play-online') {
-        sendSMS();
+        sendSMS('Someone is playing online');
         const difficulties = new Set(msg.difficulty);
         // find a valid room to join
         for (const [key, value] of rooms) {
@@ -199,7 +199,6 @@ wss.on('connection', (ws) => {
           }
         };
         // if no valid room found, create a room for another player to join
-        console.log('creating online room')
         // create room id
         const roomID = generateRandomCode();
         while (rooms.get(roomID)) {
