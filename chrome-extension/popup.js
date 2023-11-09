@@ -33,13 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
     //     chrome.storage.sync.clear();
     // });
 
-    // document.getElementById('test-btn2').addEventListener('click', async () => {
-    //     fetch('https://leet-battle.fly.dev/test')
-    //         .then(res => res.json())
-    //         .then(data => console.log(data))
-    //         .catch(err => console.log(err));
-    // });
-    
     document.getElementById('visit-create-room-btn').addEventListener('click', function () {
         showScreen('create-room');
     })
@@ -103,6 +96,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('visit-play-online-btn').addEventListener('click', function() {
         showScreen('play-online');
+        fetch(`${API_URL}/get-player-count`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('player-count').innerHTML = data.count + ' players online';
+            })
+            .catch(err => console.log(err));
     })
 
     document.getElementById('find-match-btn').addEventListener('click', function () {

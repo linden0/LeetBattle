@@ -34,21 +34,6 @@ function connect(message) {
       // Tell popup.js to show room screen
       chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
 
-      // // open up a problem tab
-      // chrome.tabs.create({ url: response.url }, (newTab) => {
-      //   // Wait for the new tab to be fully loaded
-      //   chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, tab) {
-      //     if (tabId === newTab.id && changeInfo.status === 'complete') {
-      //       // message content script to start listening for correct submission
-      //       chrome.tabs.sendMessage(newTab.id, { message: 'game-start' });
-      //       // Tell popup.js to show room screen
-      //       chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
-      //       // Remove the listener to avoid sending the message multiple times
-      //       chrome.tabs.onUpdated.removeListener(listener);
-      //     }
-      //   });
-      // });
-      
     }
 
     if (response.status === 'return-code') {
@@ -158,7 +143,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     disconnect();
   }
   if (request.message === 'play-online') {
-    console.log({status: 'play-online', difficulty: request.difficulty})
     sendMessage({status: 'play-online', difficulty: request.difficulty});
   }
   if (request.message === 'cancel-search') {
