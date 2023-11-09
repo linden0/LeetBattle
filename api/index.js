@@ -60,6 +60,19 @@ function generateRandomCode() {
 }
 rooms = new Map();
 
+app.get('/get-player-count', (req, res) => {
+  let count = 0;
+  // loop through rooms
+  for (const [key, value] of rooms) {
+    // if room is not private and is not full
+    if (!value.private) {
+      count += (value.members.size == 1) ? 1 : 2;
+    }
+  }
+  res.json({count});
+});
+  
+
 // Test route
 app.get('/test', async (req, res) => {
   console.log('rooms');
@@ -170,6 +183,7 @@ wss.on('connection', (ws) => {
             // get leetcode problem url
             const difficulty = difficultyIntersection[0];
             const url = await fetchLeetcodeProblem(new Set([difficulty]));
+            // const url = "https://leetcode.com/problems/two-sum/"
             // broadcast game starting with problem url
             rooms.get(roomID).members.forEach((member) => {
               member.send(JSON.stringify({ status: 'game-start', url, roomID }));
