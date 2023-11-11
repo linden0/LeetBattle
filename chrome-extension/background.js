@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'production';
+const ENVIRONMENT = 'development';
 const DEV_WEBSOCKET_URL = 'ws://localhost:3000';
 const PROD_WEBSOCKET_URL = 'wss://leet-battle.fly.dev';
 const WEBSOCKET_URL = ENVIRONMENT === 'development' ? DEV_WEBSOCKET_URL : PROD_WEBSOCKET_URL;
