@@ -97,6 +97,10 @@ h2 {
     color: white;
 }
 
+.back-btn:hover {
+    background-color: #3b5578;
+}
+
 input:focus {
     outline: none;
 }

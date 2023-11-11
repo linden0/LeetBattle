@@ -50,7 +50,7 @@ function connect(message) {
       // disconnect from server
       disconnect();
       // show you lose screen
-      chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=false') });
+      chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=lose') });
       roomID = null;
     }
 
@@ -58,8 +58,12 @@ function connect(message) {
       chrome.storage.sync.clear();
       // disconnect from server
       disconnect();
-      // show you win screen
-      chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=true') });
+      if (response.forfeit) {
+        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=forfeit') });
+      } else {
+        // show you win screen
+        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win') });
+      }
       roomID = null;
     }
 
@@ -131,14 +135,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return;
     }
     // open result page
-    chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=true') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win') });
     sendMessage({ status: 'game-won', roomID });
     // clear storage
     chrome.storage.sync.clear();
     disconnect();
   }
   if (request.message === 'forfeit') {
-    sendMessage({status: 'game-lost', roomID});
+    sendMessage({status: 'game-lost', roomID, forfeit: true});
     roomID = null;
     disconnect();
   }

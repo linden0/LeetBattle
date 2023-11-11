@@ -4,6 +4,7 @@ const port = process.env.PORT || 3000;
 const fs = require('fs');
 const csv = require('csv-parser');
 const redis = require('redis');
+require('dotenv').config();
 const client = redis.createClient({
     password: '***REMOVED***',
     socket: {
@@ -17,7 +18,6 @@ client.on('error', (err) => {
 });
 
 const WebSocket = require('ws');
-const { send } = require('process');
 const server = app.listen(port, () => {
   client.connect().then(() => {
     console.log('Connected to Redis');
@@ -35,6 +35,9 @@ const transporter = nodemailer.createTransport({
 });
 
 function sendSMS(message) {
+  if (process.env.ENVIRONMENT === 'development') {
+    return;
+  }
   const mailOptions = {
     from: 'career-sample.com@gmail.om',
     to: '***REMOVED***',
@@ -58,6 +61,34 @@ function generateRandomCode() {
   }
   return code;
 }
+
+function fetchLeetcodeProblem(difficulty) {
+  if (process.env.ENVIRONMENT === 'development') {
+    return new Promise((resolve, reject) => {
+      resolve('https://leetcode.com/problems/two-sum/');
+    });
+  }
+  return new Promise((resolve, reject) => {
+    const problems = [];
+
+    fs.createReadStream('leetcode-problems.csv')
+      .pipe(csv())
+      .on('data', (row) => {
+        if (difficulty.has(row.difficulty) && row.is_premium !== "1") {
+          problems.push(row.url);
+        }
+      })
+      .on('end', () => {
+        if (problems.length > 0) {
+          const randomURL = problems[Math.floor(Math.random() * problems.length)];
+          resolve(randomURL);
+        } else {
+          reject(null);
+        }
+      });
+  });
+}
+
 rooms = new Map();
 
 app.get('/get-player-count', (req, res) => {
@@ -72,13 +103,6 @@ app.get('/get-player-count', (req, res) => {
   res.json({count});
 });
   
-
-// Test route
-app.get('/test', async (req, res) => {
-  console.log('rooms');
-  console.log(rooms);
-  res.json({success: true});
-});
 
 // { room_id: { difficulty: set{"Medium"}, members: set(ws1, ws2) } }
 wss.on('connection', (ws) => {
@@ -158,7 +182,7 @@ wss.on('connection', (ws) => {
         // send message to other ws in set
         wsSet.forEach((member) => {
           if (member !== ws) {
-            member.send(JSON.stringify({ status: 'game-lost' }));
+            member.send(JSON.stringify({ status: 'game-lost', forfeit: msg.forfeit}));
           }
         });
         // clear room id from map
@@ -166,7 +190,6 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.status === 'play-online') {
-        sendSMS('Someone is playing online');
         const difficulties = new Set(msg.difficulty);
         // find a valid room to join
         for (const [key, value] of rooms) {
@@ -183,7 +206,6 @@ wss.on('connection', (ws) => {
             // get leetcode problem url
             const difficulty = difficultyIntersection[0];
             const url = await fetchLeetcodeProblem(new Set([difficulty]));
-            // const url = "https://leetcode.com/problems/two-sum/"
             // broadcast game starting with problem url
             rooms.get(roomID).members.forEach((member) => {
               member.send(JSON.stringify({ status: 'game-start', url, roomID }));
@@ -198,6 +220,7 @@ wss.on('connection', (ws) => {
             return;
           }
         };
+        sendSMS('Someone is playing online');
         // if no valid room found, create a room for another player to join
         // create room id
         const roomID = generateRandomCode();
@@ -251,25 +274,5 @@ app.get('/validate-room-code', (req, res) => {
   res.json({valid: true});
 });
 
-function fetchLeetcodeProblem(difficulty) {
-  return new Promise((resolve, reject) => {
-    const problems = [];
 
-    fs.createReadStream('leetcode-problems.csv')
-      .pipe(csv())
-      .on('data', (row) => {
-        if (difficulty.has(row.difficulty) && row.is_premium !== "1") {
-          problems.push(row.url);
-        }
-      })
-      .on('end', () => {
-        if (problems.length > 0) {
-          const randomURL = problems[Math.floor(Math.random() * problems.length)];
-          resolve(randomURL);
-        } else {
-          reject(null);
-        }
-      });
-  });
-}
 
