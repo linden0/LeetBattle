@@ -23,6 +23,14 @@ function connect(message) {
 
     // if message.status is game-start, start match
     if (response.status === 'game-start') {
+      // send push notification with chrome.notifications
+      chrome.notifications.create('', {
+        title: 'Leet Battle',
+        message: 'Match found!',
+        iconUrl: 'icons/128.png',
+        type: 'basic'
+      });
+      
       // update roomID variable
       if (response.roomID) {
         roomID = response.roomID;
