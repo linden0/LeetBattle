@@ -233,13 +233,13 @@ wss.on('connection', (ws) => {
         rooms.set(roomID, { difficulty: difficulties, private: false, members: new Set([ws]) });
         // delete room id from map after 10 minutes, if room is not full
         setTimeout(() => {
-          // if room still exists after 10 minutes not full
+          // if room still exists after 1 hour not full
           if (rooms.get(roomID) && rooms.get(roomID).members.size < 2) {
             // send message to client that room expired
             ws.send(JSON.stringify({ status: 'room-expired' }));
             rooms.delete(roomID);
           }
-        }, 600000);
+        }, 60 * 60 * 1000);
       }
 
       if (msg.status === 'cancel-search') {
