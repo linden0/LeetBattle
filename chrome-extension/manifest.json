@@ -1,7 +1,6 @@
 {
   "name": "LeetBattle",
   "description": "1v1 LeetCode battles against your friends to improve your coding skills fast!",
-  "homepage_url": "https://github.com/llagerlof/fresh-chrome-extension",
   "version": "2.0.5",
   "manifest_version": 3,
   "action": {
@@ -16,7 +15,8 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "notifications"
   ],
   "host_permissions": [
     "http://localhost:3000/*",

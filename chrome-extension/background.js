@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'production';
+const ENVIRONMENT = 'development';
 const DEV_WEBSOCKET_URL = 'ws://localhost:3000';
 const PROD_WEBSOCKET_URL = 'wss://leet-battle.fly.dev';
 const WEBSOCKET_URL = ENVIRONMENT === 'development' ? DEV_WEBSOCKET_URL : PROD_WEBSOCKET_URL;
@@ -23,6 +23,14 @@ function connect(message) {
 
     // if message.status is game-start, start match
     if (response.status === 'game-start') {
+      // send push notification with chrome.notifications
+      chrome.notifications.create('', {
+        title: 'Leet Battle',
+        message: 'Match found!',
+        iconUrl: 'icons/128.png',
+        type: 'basic'
+      });
+      
       // update roomID variable
       if (response.roomID) {
         roomID = response.roomID;
