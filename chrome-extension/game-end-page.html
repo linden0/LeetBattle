@@ -6,13 +6,44 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description" content="" />
   <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+    </style>
   <link rel="stylesheet" href="game-end-page.css" />
 
 </head>
 <body>
-  <div style="display: grid; place-content:center;height:100vh" id="container">
+  <div style="height:100vh" id="container">
+    <!-- FIXME: remove inline style -->
+    <div id='content-wrapper' style="width: 600px;max-width: 90%;margin: auto;text-align: center;padding-top: 100px; padding-bottom: 50px; height: calc(100vh - 150px); display: flex; flex-direction: column;">
+      <div id="result"></div>
+      
+      <div id="chatbox">
+        <!-- <div class="opponent">
+          <span>hi</span>
+        </div>
+        <div class="you">
+          <span>hi</span>
+        </div>
+        <div class="system">
+          <span>hi</span>
+        </div> -->
+      </div>
+      <div id="chatbox-input">
+        <input id="chat-input" maxlength="300" autocomplete="off" placeholder="Type your message here ..."/>
+        <button id="send-message-btn">
+          <span class="material-symbols-outlined">send</span>
+        </button>
+      </div>
+    </div>
   </div>
   <script src="game-end-page.js"></script>
-
 </body>
 </html>
