@@ -1,7 +1,7 @@
 {
   "name": "LeetBattle",
   "description": "1v1 LeetCode battles against your friends to improve your coding skills fast!",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "manifest_version": 3,
   "action": {
     "default_popup": "popup.html"

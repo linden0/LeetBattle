@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Koulen&family=Manrope:wght@700&family=Roboto:wght@400;700&display=swap');
 body {
     background-color: #4995C7;
     height: 100%;
@@ -37,4 +38,118 @@ p {
 .message-wrapper {
     text-align: center;
     margin-top: 10%;
+}
+
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: scroll;
+    max-height: 300px;
+}
+
+li {
+    margin: 5px;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+.opponent {
+    background-color: #1364DF;
+    color: white;
+    padding: 10px 20px;
+    text-align: left;
+    width: fit-content;
+    border-radius: 0px 6px 6px 6px;
+    max-width: 48%;
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    word-wrap: break-word;
+
+}
+
+.you {
+    margin-left: auto;
+    background-color: #FBFFF1;
+    color: black;
+    padding: 10px 20px;
+    text-align: left;
+    width: fit-content;
+    border-radius: 6px 6px 0px 6px;
+    max-width: 48%;
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    word-wrap: break-word;
+
+}
+
+.system {
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    font-style: italic;
+    word-wrap: break-word;
+}
+
+#chatbox {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 40px;
+}
+
+#chatbox-input {
+    height: 50px;
+    background-color: rgb(15, 82, 121);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-top: 20px;
+}
+
+#chat-input {
+    color: white;
+    border: none;
+    background-color: inherit;
+    height: 25px;
+    font-size: 17px;
+    width: 100%;
+}
+#chat-input:focus {
+    outline: none;
+
+}
+::placeholder {
+    color: rgb(228, 228, 228)
+}
+
+#send-message-btn {
+    background-color: inherit;
+    border: none;
+    color: white;
+    display: grid;
+    cursor: pointer;
+    place-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+}
+
+#send-message-btn:hover {
+    background-color: rgb(11, 62, 92);
+}
+
+::-webkit-scrollbar {
+    background: #4995C7;
+    
+}
+::-webkit-scrollbar-thumb {
+    background: rgb(15, 82, 121);
+    border-radius: 10px;
 }
