@@ -5,13 +5,14 @@ const WEBSOCKET_URL = ENVIRONMENT === 'development' ? DEV_WEBSOCKET_URL : PROD_W
 
 let webSocket = null;
 let roomID = null;
+let url = null;
+let screen = null;
 
 // connect to websocket server
 function connect(message) {
   webSocket = new WebSocket(WEBSOCKET_URL);
 
   webSocket.onopen = () => {
-    console.log('websocket open');
     keepAlive();
     if (message) {
       webSocket.send(JSON.stringify(message))
@@ -35,13 +36,12 @@ function connect(message) {
       if (response.roomID) {
         roomID = response.roomID;
       }
-      // store url in storage
-      chrome.storage.sync.set({ 'url': response.url });
-      // open up a problem tab
+      // store url
+      url = response.url;
+      // open up problem tab
       chrome.tabs.create({ url: response.url });
-      // Tell popup.js to show room screen
-      chrome.storage.sync.set({ 'screen' : {'screen-name': 'room'} });
-
+      // tell popup.js to show room screen
+      screen = 'room';
     }
 
     if (response.status === 'return-code') {
@@ -54,44 +54,46 @@ function connect(message) {
     }
 
     if (response.status === 'game-won') {
-      chrome.storage.sync.clear();
       // disconnect from server
       disconnect();
       // show you lose screen
-      chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=lose') });
+      chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=lose&roomID=' + roomID) });
+      // clear variables
+      url = null;
+      screen = null;
       roomID = null;
     }
 
     if (response.status === 'game-lost') {
-      chrome.storage.sync.clear();
       // disconnect from server
       disconnect();
+      // show screen depending on if player lost or forfeited
       if (response.forfeit) {
         chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=forfeit') });
       } else {
         // show you win screen
-        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win&roomID' + roomID) });
       }
+      // clear variables
+      url = null;
+      screen = null;
       roomID = null;
     }
 
     if (response.status === 'room-expired') {
       roomID = null;
-      // show room expired screen if popup is open, otherwise save screen to storage
-      try {
-        chrome.runtime.sendMessage({ message: 'room-expired' });
-      }
-      catch (err) {
-        chrome.storage.sync.set({ 'screen' : {'screen-name': 'room-expired'} });
-      }
+      url = null;
+      screen = 'room-expired';
+      disconnect();
     }
-
-    
   };
 
   webSocket.onclose = (event) => {
-    console.log('websocket connection closed');
     webSocket = null;
+    roomID = null;
+    url = null;
+    screen = null;
+
   };
 }
 
@@ -106,7 +108,6 @@ function keepAlive() {
   const keepAliveIntervalId = setInterval(
     () => {
       if (webSocket) {
-        console.log('staying alive')
         webSocket.send(JSON.stringify({status: 'keepalive'}));
       } else {
         clearInterval(keepAliveIntervalId);
@@ -125,41 +126,75 @@ function sendMessage(message) {
   } else {
     webSocket.send(JSON.stringify(message));
   }
-
 }
 
 // receive message from popup.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
   if (request.message === 'create-room') {
     sendMessage({ status: 'create-room', difficulty: request.difficulty });
-
   }
+
   if (request.message === 'join-room') {
     roomID = request.roomID;
     sendMessage({ status: 'join-room', roomID });
   }
+
   if (request.message === 'game-won') {
     if (!roomID) {
       return;
     }
     // open result page
-    chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win&roomID=' + roomID) });
     sendMessage({ status: 'game-won', roomID });
-    // clear storage
-    chrome.storage.sync.clear();
     disconnect();
+    // clear variables
+    url = null;
+    screen = null;
+    roomID = null;
   }
+
   if (request.message === 'forfeit') {
     sendMessage({status: 'game-lost', roomID, forfeit: true});
     roomID = null;
+    url = null;
+    screen = null;
     disconnect();
   }
+
   if (request.message === 'play-online') {
     sendMessage({status: 'play-online', difficulty: request.difficulty});
   }
+
   if (request.message === 'cancel-search') {
     sendMessage({status: 'cancel-search', roomID});
     roomID = null;
+    url = null;
+    screen = null;
     disconnect();
+  }
+
+  if (request.message === 'end-session') {
+    url = null;
+    screen = null;
+    roomID = null;
+    disconnect();
+  }
+
+  if (request.message === 'save-screen') {
+    screen = request.screen;
+  }
+
+  if (request.message === 'get-screen') {
+    sendResponse({ screen, roomID });
+  }
+  
+  if (request.message === 'get-url') {
+    sendResponse({ url });
+  }
+
+  if (request.message === 'test') {
+    // respond with all details
+    sendResponse(JSON.stringify({ url, screen, roomID, webSocket: webSocket != null }));
   }
 });

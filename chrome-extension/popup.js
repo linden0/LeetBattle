@@ -3,35 +3,44 @@ const DEV_API_URL = 'http://localhost:3000';
 const PROD_API_URL = 'https://leet-battle.fly.dev';
 const API_URL = ENVIRONMENT === 'development' ? DEV_API_URL : PROD_API_URL;
 
+// screens that should persist until user navigates away
 const savedScreens = ["enter-code", "room", "room-expired", "waiting-room"];
 
 document.addEventListener('DOMContentLoaded', function () {
-    //implement copy code button
+
+    // copy code to clipboard
     document.getElementById('copy-code-btn').addEventListener('click', function () {
         const code = document.getElementById('room-code-display').value;
         navigator.clipboard.writeText(code);
     });
 
-
     // implement back button
     const backButtons = document.getElementsByClassName('back-btn');
     for (let i = 0; i < backButtons.length; i++) {
         backButtons[i].addEventListener('click', function () {
-            
             // if on enter code page, send message to background.js to delete room
             if (document.getElementById('enter-code').style.display === 'block') {
                 chrome.runtime.sendMessage({ message: 'cancel-search' });
             }
-            // clear storage
-            chrome.storage.sync.clear();
+            // end session and disconnect
+            chrome.runtime.sendMessage({ message: 'end-session' });
             showScreen('home');
         });
     }
 
-    // when id="test-btn" is clicked, fetch to localhost:3000/test
-    // document.getElementById('test-btn1').addEventListener('click', async () => {
-    //     chrome.storage.sync.clear();
-    // });
+    document.getElementById('test-btn1').addEventListener('click', async () => {
+        // send message to background with message = test, and alert with response
+        chrome.runtime.sendMessage({ message: 'test' }, function (response) {
+            alert(response);
+        });
+    });
+    document.getElementById('test-btn2').addEventListener('click', async () => {
+        fetch(`${API_URL}/test`)
+            .then(res => res.json())
+            .then(data => alert(data.message))
+            .catch(err => console.log(err));
+    });
+    
 
     document.getElementById('visit-create-room-btn').addEventListener('click', function () {
         showScreen('create-room');
@@ -55,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Please select at least one difficulty, or all if no preference')
             return;
         }
-
 
         // send message to background.js
         chrome.runtime.sendMessage({ message: 'create-room', difficulty: selections });
@@ -88,9 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('forfeit').addEventListener('click', function () {
         showScreen('home');
-        // clear storage
-        chrome.storage.sync.clear();
-        // send message to background.js
         chrome.runtime.sendMessage({message: 'forfeit'})
     });
 
@@ -121,17 +126,13 @@ document.addEventListener('DOMContentLoaded', function () {
         showScreen('waiting-room');
         chrome.runtime.sendMessage({ message: 'play-online', difficulty: selections });
 
-
     })
 
     document.getElementById('cancel-search').addEventListener('click', function () {
         showScreen('home');
-        // clear storage
-        chrome.storage.sync.clear();
         // send message to background.js
         chrome.runtime.sendMessage({message: 'cancel-search'});
     });
-
 
     renderScreens();
     
@@ -143,37 +144,35 @@ document.addEventListener('DOMContentLoaded', function () {
 //     "code": "123456"
 // }
 function renderScreens() {
-    chrome.storage.sync.get(['screen'], function (result) {
-        result = result['screen'];
-        if (!result || (!savedScreens.includes(result['screen-name']))) {
-            return;
-        }
-        else if (result['screen-name'] === 'enter-code') {
-            
-            // display code
-            document.getElementById('room-code-display').value = result['code'];
-            // show enter code screen
-            showScreen('enter-code');
-        }
-        else {
-            showScreen(result['screen-name']);
-        }
-    });
+    // get screen from background script
+    try {
+        chrome.runtime.sendMessage({ message: 'get-screen' }, function (response) {
+            if (response.screen) {
+                if (response.screen === 'enter-code') {
+                    // display code
+                    document.getElementById('room-code-display').value = response.roomID;
+                }
+                showScreen(response.screen);
+            } else {
+                showScreen('home');
+            }
+        });
+    }
+    catch(e) {
+        console.log(e)
+        showScreen('home');
+    }
+
 }
 
 // show correct screen
 function showScreen(screen) {
+    console.log(screen);
     closeScreens();
     document.getElementById(screen).style.display = "block";
     // save screen to storage
     if (savedScreens.includes(screen)) {
-        const screenObj = (screen === 'enter-code') ? {
-            "screen-name": screen,
-            "code": document.getElementById('room-code-display').value
-        } : {
-            "screen-name": screen
-        };
-        chrome.storage.sync.set({ 'screen' : screenObj });
+        chrome.runtime.sendMessage({ message: 'save-screen', screen });
     }
 }
 
