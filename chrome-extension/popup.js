@@ -28,18 +28,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.getElementById('test-btn1').addEventListener('click', async () => {
-        // send message to background with message = test, and alert with response
-        chrome.runtime.sendMessage({ message: 'test' }, function (response) {
-            alert(response);
-        });
-    });
-    document.getElementById('test-btn2').addEventListener('click', async () => {
-        fetch(`${API_URL}/test`)
-            .then(res => res.json())
-            .then(data => alert(data.message))
-            .catch(err => console.log(err));
-    });
+    // document.getElementById('test-btn1').addEventListener('click', async () => {
+    //     // send message to background with message = test, and alert with response
+    //     chrome.runtime.sendMessage({ message: 'test' }, function (response) {
+    //         alert(response);
+    //     });
+    // });
+    // document.getElementById('test-btn2').addEventListener('click', async () => {
+    //     fetch(`${API_URL}/test`)
+    //         .then(res => res.json())
+    //         .then(data => alert(data.message))
+    //         .catch(err => console.log(err));
+    // });
     
 
     document.getElementById('visit-create-room-btn').addEventListener('click', function () {
