@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'development';
+const ENVIRONMENT = 'production';
 const WEBSOCKET_URL = ENVIRONMENT === 'development' ? 'ws://localhost:3000' : 'wss://leet-battle.fly.dev';
 let webSocket = null;
 
