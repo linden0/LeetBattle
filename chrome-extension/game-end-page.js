@@ -1,4 +1,7 @@
+const ENVIRONMENT = 'development';
+const WEBSOCKET_URL = ENVIRONMENT === 'development' ? 'ws://localhost:3000' : 'wss://leet-battle.fly.dev';
 let webSocket = null;
+
 document.addEventListener('DOMContentLoaded', function () {
 
   // fetch status - win/lose, roomID
@@ -34,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    webSocket = new WebSocket('ws://localhost:3000');
+    webSocket = new WebSocket(WEBSOCKET_URL);
   
     webSocket.addEventListener('open', (event) => {
       console.log('Connected to the server');
