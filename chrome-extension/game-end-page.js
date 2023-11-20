@@ -69,6 +69,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     };
 
+    webSocket.onerror = (event) => {
+      document.getElementById('chatbox').innerHTML = `<h2>Sorry, chat is not available at the moment</h2>`;
+    }
+
     webSocket.onclose = (event) => {
       console.log('Disconnected from the server');
     };
