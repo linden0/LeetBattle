@@ -7,6 +7,7 @@ let webSocket = null;
 let roomID = null;
 let url = null;
 let screen = null;
+let shuffleStatus = null;
 
 // connect to websocket server
 function connect(message) {
@@ -62,6 +63,7 @@ function connect(message) {
       url = null;
       screen = null;
       roomID = null;
+      shuffleStatus = null;
     }
 
     if (response.status === 'game-lost') {
@@ -78,13 +80,44 @@ function connect(message) {
       url = null;
       screen = null;
       roomID = null;
+      shuffleStatus = null;
     }
 
     if (response.status === 'room-expired') {
       roomID = null;
       url = null;
+      shuffleStatus = null;
       screen = 'room-expired';
       disconnect();
+    }
+
+    if (response.status === 'request-shuffle') {
+      // update shuffleStatus
+      shuffleStatus = 'accept-shuffle'
+      // send notification to user
+      chrome.notifications.create('', {
+        title: 'Leet Battle',
+        message: 'Opponent has requested a problem shuffle!',
+        iconUrl: 'icons/128.png',
+        type: 'basic'
+      });
+      // tell popup script to show shuffle button if popup is open
+      // FIXME: try catch still throws error, supress error
+      try {
+        chrome.runtime.sendMessage({ message: 'show-shuffle-accept' });
+      } catch (e) {
+        console.log('popup not open');
+      }
+      
+    }
+
+    if (response.status === 'accept-shuffle') {
+      // update shuffleStatus
+      shuffleStatus = null;
+      // update url
+      url = response.url;
+      // open problem tab
+      chrome.tabs.create({ url: response.url });
     }
   };
 
@@ -93,7 +126,7 @@ function connect(message) {
     roomID = null;
     url = null;
     screen = null;
-
+    shuffleStatus = null;
   };
 }
 
@@ -152,6 +185,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     url = null;
     screen = null;
     roomID = null;
+    shuffleStatus = null;
   }
 
   if (request.message === 'forfeit') {
@@ -159,6 +193,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     roomID = null;
     url = null;
     screen = null;
+    shuffleStatus = null;
     disconnect();
   }
 
@@ -171,6 +206,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     roomID = null;
     url = null;
     screen = null;
+    shuffleStatus = null;
     disconnect();
   }
 
@@ -178,6 +214,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     url = null;
     screen = null;
     roomID = null;
+    shuffleStatus = null;
     disconnect();
   }
 
@@ -185,12 +222,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     screen = request.screen;
   }
 
-  if (request.message === 'get-screen') {
-    sendResponse({ screen, roomID });
+  if (request.message === 'get-session-details') {
+    sendResponse({ url, screen, roomID, shuffleStatus });
   }
-  
-  if (request.message === 'get-url') {
-    sendResponse({ url });
+
+  if (request.message === 'request-shuffle') {
+    // update shuffleStatus
+    shuffleStatus = 'shuffle-requested';
+    sendMessage({ status: 'request-shuffle', roomID });
+  }
+
+  if (request.message === 'accept-shuffle') {
+    sendMessage({ status: 'accept-shuffle', roomID });
   }
 
   if (request.message === 'test') {
