@@ -8,6 +8,11 @@ const savedScreens = ["enter-code", "room", "room-expired", "waiting-room"];
 
 document.addEventListener('DOMContentLoaded', function () {
 
+    // capitalize letters when entering room code
+    document.getElementById('room-code').addEventListener('input', function () {
+        document.getElementById('room-code').value = document.getElementById('room-code').value.toUpperCase();
+    });
+
     // copy code to clipboard
     document.getElementById('copy-code-btn').addEventListener('click', function () {
         const code = document.getElementById('room-code-display').value;
@@ -41,6 +46,27 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => console.log(err));
     });
     
+    document.getElementById('request-shuffle-btn').addEventListener('click', function () {
+        // send message to background.js
+        chrome.runtime.sendMessage({ message: 'request-shuffle' });
+        // hide shuffle button, accept button
+        document.getElementById('request-shuffle-btn').style.display = 'none';
+        document.getElementById('accept-shuffle-btn').style.display = 'none';
+        // show room status that shuffle has been requested, waiting for opponent to accept
+        document.getElementById('room-status').innerText = 'Waiting for your opponent to accept shuffle request...';
+        document.getElementById('room-status').style.display = 'block';
+    }); 
+
+    document.getElementById('accept-shuffle-btn').addEventListener('click', function () {
+        //      send message to background.js
+        chrome.runtime.sendMessage({ message: 'accept-shuffle' });
+        //      show message in popup that shuffle has been accepted
+        document.getElementById('room-status').innerText = 'Shuffle accepted! Redirecting to new problem...';
+        document.getElementById('room-status').style.display = 'block';
+        //      hide shuffle button, accept button
+        document.getElementById('request-shuffle-btn').style.display = 'none';
+        document.getElementById('accept-shuffle-btn').style.display = 'none';
+    });
 
     document.getElementById('visit-create-room-btn').addEventListener('click', function () {
         showScreen('create-room');
@@ -146,7 +172,35 @@ document.addEventListener('DOMContentLoaded', function () {
 function renderScreens() {
     // get screen from background script
     try {
-        chrome.runtime.sendMessage({ message: 'get-screen' }, function (response) {
+        chrome.runtime.sendMessage({ message: 'get-session-details' }, function (response) {
+            if (!response.shuffleStatus) {
+                // hide shuffle button, accept button, and room status
+                document.getElementById('request-shuffle-btn').style.display = 'none';
+                document.getElementById('accept-shuffle-btn').style.display = 'none';
+                document.getElementById('room-status').style.display = 'none';
+                // show shuffle button
+                document.getElementById('request-shuffle-btn').style.display = 'block';
+            }
+            else if (response.shuffleStatus === 'accept-shuffle') {
+                // hide shuffle button, accept button, and room status
+                document.getElementById('request-shuffle-btn').style.display = 'none';
+                document.getElementById('accept-shuffle-btn').style.display = 'none';
+                document.getElementById('room-status').style.display = 'none';
+                // show accept button
+                document.getElementById('accept-shuffle-btn').style.display = 'block';
+                document.getElementById('room-status').innerText = "Your opponent doesn't like this problem. Wanna shuffle?";
+                document.getElementById('room-status').style.display = 'block';
+            }
+            else if (response.shuffleStatus === 'shuffle-requested') {
+                // hide shuffle button, accept button, and room status
+                document.getElementById('request-shuffle-btn').style.display = 'none';
+                document.getElementById('accept-shuffle-btn').style.display = 'none';
+                document.getElementById('room-status').style.display = 'none';
+                // show room status
+                document.getElementById('room-status').innerText = 'Waiting for your opponent to accept shuffle request...';
+                document.getElementById('room-status').style.display = 'block';
+            }
+
             if (response.screen) {
                 if (response.screen === 'enter-code') {
                     // display code
@@ -201,6 +255,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.message === 'room-expired') {
         // show room expired screen
         showScreen('room-expired');
+    }
+    if (request.message === 'show-shuffle-accept') {
+        // hide shuffle button, accept button, and room status
+        document.getElementById('request-shuffle-btn').style.display = 'none';
+        document.getElementById('accept-shuffle-btn').style.display = 'none';
+        document.getElementById('room-status').style.display = 'none';
+        // show accept button
+        document.getElementById('accept-shuffle-btn').style.display = 'block';
+        document.getElementById('room-status').innerText = "Your opponent doesn't like this problem. Wanna shuffle?";
+        document.getElementById('room-status').style.display = 'block';
     }
 });
 
