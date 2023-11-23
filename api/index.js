@@ -311,6 +311,43 @@ wss.on('connection', (ws) => {
       });
     }
 
+    if (msg.status === 'request-shuffle') {
+      // get roomID
+      const roomID = msg.roomID;
+      // validate roomID
+      if (!roomID || !rooms.get(roomID)) {
+        return;
+      }
+      // send message to other player
+      rooms.get(roomID).members.forEach((member) => {
+        if (member !== ws) {
+          member.send(JSON.stringify({ status: 'request-shuffle' }));
+        }
+      });
+    }
+
+    if (msg.status === 'accept-shuffle') {
+      // get roomID
+      const roomID = msg.roomID;
+      // validate roomID
+      if (!roomID || !rooms.get(roomID)) {
+        return;
+      }
+      // get difficulty of room
+      const difficulty = rooms.get(roomID).difficulty;
+      // generate new problem url
+      let url = null;
+      if (process.env.ENVIRONMENT === 'development') {
+        url = 'https://leetcode.com/problems/palindrome-number/';
+      } else {
+        url = await fetchLeetcodeProblem(difficulty);
+      }
+      // send message to both players
+      rooms.get(roomID).members.forEach((member) => {
+        member.send(JSON.stringify({ status: 'accept-shuffle', url }));
+      });
+    }
+
   });
 
   ws.on('close', () => {
