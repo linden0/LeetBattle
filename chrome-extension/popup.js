@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'development';
+const ENVIRONMENT = 'production';
 const DEV_API_URL = 'http://localhost:3000';
 const PROD_API_URL = 'https://leet-battle.fly.dev';
 const API_URL = ENVIRONMENT === 'development' ? DEV_API_URL : PROD_API_URL;
@@ -33,18 +33,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.getElementById('test-btn1').addEventListener('click', async () => {
-        // send message to background with message = test, and alert with response
-        chrome.runtime.sendMessage({ message: 'test' }, function (response) {
-            alert(response);
-        });
-    });
-    document.getElementById('test-btn2').addEventListener('click', async () => {
-        fetch(`${API_URL}/test`)
-            .then(res => res.json())
-            .then(data => alert(data.message))
-            .catch(err => console.log(err));
-    });
+    // document.getElementById('test-btn1').addEventListener('click', async () => {
+    //     // send message to background with message = test, and alert with response
+    //     chrome.runtime.sendMessage({ message: 'test' }, function (response) {
+    //         alert(response);
+    //     });
+    // });
+    // document.getElementById('test-btn2').addEventListener('click', async () => {
+    //     fetch(`${API_URL}/test`)
+    //         .then(res => res.json())
+    //         .then(data => alert(data.message))
+    //         .catch(err => console.log(err));
+    // });
     
     document.getElementById('request-shuffle-btn').addEventListener('click', function () {
         // send message to background.js
