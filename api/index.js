@@ -6,7 +6,7 @@ const csv = require('csv-parser');
 const redis = require('redis');
 require('dotenv').config();
 const client = redis.createClient({
-    password: '***REMOVED***',
+    password: process.env.***REMOVED***,
     socket: {
         host: 'redis-18576.c81.us-east-1-2.ec2.cloud.redislabs.com',
         port: 18576
@@ -29,8 +29,8 @@ const wss = new WebSocket.Server({ server });
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: '***REMOVED***',
-    pass: '***REMOVED***'
+    user: process.env.***REMOVED***,
+    pass: process.env.***REMOVED***
   },
 });
 
@@ -43,8 +43,8 @@ function sendSMS(message) {
     return;
   }
   const mailOptions = {
-    from: 'career-sample.com@gmail.om',
-    to: '***REMOVED***',
+    from: process.env.***REMOVED***,
+    to: process.env.***REMOVED***,
     subject: 'Alert',
     text: message,
   };
