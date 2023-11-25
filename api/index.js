@@ -33,6 +33,7 @@ const server = app.listen(port, () => {
 const wss = new WebSocket.Server({ server });
 
 
+
 console.log('FIXME: roomcode validation should be done through websocket');
 console.log('FIXME: room code generation should handle collisions inside function');
 
