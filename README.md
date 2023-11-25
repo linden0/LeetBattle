@@ -1,4 +1,3 @@
-# LeetBattle
 [LeetBattle](https://chromewebstore.google.com/detail/leetbattle/kidgeaockeleejmeogfcaodagaigllkp?hl=en "LeetBattle") is a chrome extension for LeetCode 1v1s to make DSA practice fun.
 
 ## Setup
