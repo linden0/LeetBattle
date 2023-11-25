@@ -13,6 +13,12 @@ const client = redis.createClient({
     }
 });
 const nodemailer = require('nodemailer');
+
+if (!process.env.ENVIRONMENT) {
+  console.error('ERROR: Environment variable not set');
+  process.exit(1);
+}
+
 client.on('error', (err) => {
   console.error(`Redis error: ${err}`);
 });
@@ -26,13 +32,6 @@ const server = app.listen(port, () => {
 });
 const wss = new WebSocket.Server({ server });
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.PERSONAL_EMAIL,
-    pass: process.env.EMAIL_PASSWORD
-  },
-});
 
 
 console.log('FIXME: roomcode validation should be done through websocket');
@@ -48,6 +47,14 @@ function sendSMS(message) {
     subject: 'Alert',
     text: message,
   };
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.PERSONAL_EMAIL,
+      pass: process.env.EMAIL_PASSWORD
+    },
+  });
+  
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.log(error);
