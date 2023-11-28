@@ -115,17 +115,6 @@ app.get('/test', (req, res) => {
   console.log(rooms)
 });
 
-app.get('/get-player-count', (req, res) => {
-  let count = 0;
-  // loop through rooms
-  for (const [key, value] of rooms) {
-    // if room is not private and is not full
-    if (!value.private) {
-      count += (value.members.size == 1) ? 1 : 2;
-    }
-  }
-  res.json({ count });
-});
 
 app.get('/validate-room-code', (req, res) => {
   console.log('FIXME: roomcode validation should be done through websocket');

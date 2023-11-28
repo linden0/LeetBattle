@@ -1,4 +1,4 @@
-const ENVIRONMENT = 'production';
+const ENVIRONMENT = 'development';
 const DEV_API_URL = 'http://localhost:3000';
 const PROD_API_URL = 'https://leet-battle.fly.dev';
 const API_URL = ENVIRONMENT === 'development' ? DEV_API_URL : PROD_API_URL;
@@ -127,13 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('visit-play-online-btn').addEventListener('click', function() {
         showScreen('play-online');
-        fetch(`${API_URL}/get-player-count`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('player-count').innerHTML = data.count + ' players online';
-            })
-            .catch(err => console.log(err));
-    })
+    });
 
     document.getElementById('find-match-btn').addEventListener('click', function () {
         // validate difficulty
