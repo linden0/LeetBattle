@@ -1,7 +1,7 @@
 {
   "name": "LeetBattle",
   "description": "1v1 LeetCode battles against your friends to improve your coding skills fast!",
-  "version": "2.0.9",
+  "version": "2.1.0",
   "manifest_version": 3,
   "action": {
     "default_popup": "popup.html"
@@ -15,7 +15,8 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "notifications"
+    "notifications",
+    "storage"
   ],
   "host_permissions": [
     "http://localhost:3000/*",

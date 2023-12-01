@@ -1,10 +1,16 @@
 const express = require('express');
 const app = express();
+app.use(express.json());
 const port = process.env.PORT || 3000;
 const fs = require('fs');
 const csv = require('csv-parser');
 const redis = require('redis');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
+const dbo = require("./database/connection");
+const User = require("./models/users");
+
 const client = redis.createClient({
     password: process.env.REDIS_PASSWORD,
     socket: {
@@ -27,6 +33,9 @@ const WebSocket = require('ws');
 const server = app.listen(port, () => {
   client.connect().then(() => {
     console.log('Connected to Redis');
+  });
+  dbo.connectToServer(function (err) {
+    if (err) console.error(err);
   });
   console.log(`Server is running on http://localhost:${port}`);
 });
@@ -100,10 +109,20 @@ function fetchLeetcodeProblem(difficulty) {
   });
 }
 
+function updateEloAndWinLoss(winner, loser) {
+  const K = 32;
+  const expectedScoreWinner = 1 / (1 + 10 ** ((loser.elo - winner.elo) / 400));
+  const expectedScoreLoser = 1 / (1 + 10 ** ((winner.elo - loser.elo) / 400));
+  winner.elo = Math.round(winner.elo + K * (1 - expectedScoreWinner));
+  loser.elo = Math.round(loser.elo + K * (0 - expectedScoreLoser));
+  winner.wins++;
+  loser.losses++;
+}
+
 // { 
 //   roomID: { 
 //     difficulty: set{"Medium"}, 
-//     members: set([ws1, ws2]), 
+//     members: [Player1, Player2], 
 //     chat: set([ws1, ws2]), 
 //     isPrivate: boolean, 
 //     isGameFinished: boolean 
@@ -112,19 +131,84 @@ function fetchLeetcodeProblem(difficulty) {
 let rooms = new Map();
 
 app.get('/test', (req, res) => {
-  console.log(rooms)
+  console.log('rooms: ')
+  rooms.forEach((value, key) => {
+    console.log(key);
+    console.log(value);
+  });
+  return res.json({ message: 'success' });
 });
 
-app.get('/get-player-count', (req, res) => {
-  let count = 0;
-  // loop through rooms
-  for (const [key, value] of rooms) {
-    // if room is not private and is not full
-    if (!value.private) {
-      count += (value.members.size == 1) ? 1 : 2;
-    }
+class Player {
+  constructor(ws, elo, email, wins, losses) {
+    this.ws = ws;
+    this.elo = elo;
+    this.email = email;
+    this.wins = wins;
+    this.losses = losses;
   }
-  res.json({ count });
+}
+
+app.post('/auth-check', async (req, res) => {
+  let token = req.headers.authorization;
+  token = token.split(' ')[1];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // fetch user stats from db
+      const user = await User.findOne({ email: decoded.email });
+      return res.json({elo: user.elo, wins: user.wins, losses: user.losses, isValid: true, email: decoded.email})
+    } catch (err) {
+      return res.json({ isValid: false })
+    }
+  } else {
+    return res.json({ isValid: false })
+  }
+})
+
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.send({ error: true, message: 'Incorrect email' });
+    }
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.send({ error: true, message: 'Incorrect password' });
+    }
+
+    // Generate JWT Token
+    const token = jwt.sign({email: email}, process.env.JWT_SECRET, { expiresIn: '50d' });
+    return res.send({ error: false, message: 'Logged in successfully', token, email: email, elo: user.elo, wins: user.wins, losses: user.losses })
+  } catch (err) {
+    console.log(err);
+    res.send({ error: true, message: 'An error occurred while logging in' });
+  }
+});
+
+app.post('/register', async (req, res) => {
+  try {
+    // Check if a user with the same email already exists
+    const existingUser = await User.findOne({ email: req.body.email });
+    if (existingUser) {
+      return res.send({ error: true, message: 'A user with that email already exists' });
+    }
+    // Hash the password with bcrypt
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    // Create a new user with the email and hashed password
+    const newUser = new User({
+      email: req.body.email,
+      password: hashedPassword,
+    });
+    newUser.save();
+    const token = jwt.sign({email: req.body.email}, process.env.JWT_SECRET, { expiresIn: '2d' });
+    return res.send({ error: false, message: 'User created successfully', token, email: req.body.email, elo: 1000, wins: 0, losses: 0 })
+
+  } catch (err) {
+    console.error(err);
+    res.send({ error: true, message: 'An error occurred while registering a new user' });
+  }
 });
 
 app.get('/validate-room-code', (req, res) => {
@@ -136,7 +220,7 @@ app.get('/validate-room-code', (req, res) => {
     return res.status(404).json({ valid: false, message: 'Room does not exist' });
   }
   // if room has two players, send error
-  if (room.members.size === 2) {
+  if (room.members.length === 2) {
     return res.status(400).json({ valid: false, message: 'Room is full' });
   }
   // room id is valid
@@ -147,7 +231,6 @@ wss.on('connection', (ws) => {
   console.log('Client connected');
   ws.on('message', async (message) => {
     const msg = JSON.parse(message);
-
     if (msg.status === 'keepalive') {
       return;
     }
@@ -159,13 +242,13 @@ wss.on('connection', (ws) => {
         roomID = generateRandomCode();
       }
       // create room and add to rooms set
-      rooms.set(roomID, { difficulty: new Set(msg.difficulty), private: true, members: new Set([ws]), chat: new Set(), isGameFinished: false });
+      rooms.set(roomID, { difficulty: new Set(msg.difficulty), private: true, members: [new Player(ws, msg.elo, msg.email, msg.wins, msg.losses)], chat: new Set(), isGameFinished: false });
       // send room id to client
       ws.send(JSON.stringify({ status: 'return-code', roomID, displayCode: true }));
       // delete room after 5 minutes, if room is not full
       setTimeout(() => {
         // if room still exists after 5 minutes not full
-        if (rooms.get(roomID) && rooms.get(roomID).members.size < 2) {
+        if (rooms.get(roomID) && rooms.get(roomID).members.length < 2) {
           // send message to client that room expired
           ws.send(JSON.stringify({ status: 'room-expired' }));
           rooms.delete(roomID);
@@ -178,12 +261,12 @@ wss.on('connection', (ws) => {
       // get room id from client
       const roomID = msg.roomID;
       // add ws to set mapped to room id
-      rooms.get(roomID).members.add(ws);
+      rooms.get(roomID).members.push(new Player(ws, msg.elo, msg.email, msg.wins, msg.losses));
       // get leetcode problem url
       const url = await fetchLeetcodeProblem(rooms.get(roomID).difficulty);
       // broadcast game starting with problem url
       rooms.get(roomID).members.forEach((member) => {
-        member.send(JSON.stringify({ status: 'game-start', url }));
+        member.ws.send(JSON.stringify({ status: 'game-start', url }));
       });
       // delete room after 2 hours
       setTimeout(() => {
@@ -194,36 +277,48 @@ wss.on('connection', (ws) => {
       }, 7200000);
     }
 
-    if (msg.status === 'game-won') {
-      sendSMS('Game Won')
+    if (msg.status === 'game-end') {
       // get room id from client
       const roomID = msg.roomID;
       // update finished status
       rooms.get(roomID).isGameFinished = true;
-      // get ws from map
-      const wsSet = rooms.get(roomID).members;
-      // send message to other ws in set
-      wsSet.forEach((member) => {
-        if (member !== ws) {
-          member.send(JSON.stringify({ status: 'game-won' }));
+      // find winner and loser
+      let winner = null;
+      let loser = null;
+      if (msg.result === 'win') {
+        if (rooms.get(roomID).members[0].ws === ws) {
+          winner = rooms.get(roomID).members[0];
+          loser = rooms.get(roomID).members[1];
+        } else {
+          winner = rooms.get(roomID).members[1];
+          loser = rooms.get(roomID).members[0];
         }
-      });
-    }
+      }
+      else if (msg.result === 'forfeit') {
+        if (rooms.get(roomID).members[0].ws === ws) {
+          winner = rooms.get(roomID).members[1];
+          loser = rooms.get(roomID).members[0];
+        }
+        else {
+          winner = rooms.get(roomID).members[0];
+          loser = rooms.get(roomID).members[1];
+        }
+      }
+      // update their elo/wins/losses
+      updateEloAndWinLoss(winner, loser);
+      // save stats to db
+      try {
+        await User.updateOne({ email: winner.email }, { elo: winner.elo, wins: winner.wins, losses: winner.losses });
+        await User.updateOne({ email: loser.email }, { elo: loser.elo, wins: loser.wins, losses: loser.losses });
+      }
+      catch {
+        sendSMS('Error saving stats to db');
+      }
+      // send message to each player
+      winner.ws.send(JSON.stringify({ status: 'game-won', forfeit: msg.result === 'forfeit', elo: winner.elo, wins: winner.wins, losses: winner.losses }));
+      loser.ws.send(JSON.stringify({ status: 'game-lost', forfeit: msg.result === 'forfeit', elo: loser.elo, wins: loser.wins, losses: loser.losses}));
 
-    if (msg.status === 'game-lost') {
-      // get room id from client
-      const roomID = msg.roomID;
-      // update finished status
-      rooms.get(roomID).isGameFinished = true;
-      // get ws from map
-      const wsSet = rooms.get(roomID).members;
-      // send message to other ws in set
-      wsSet.forEach((member) => {
-        if (member !== ws) {
-          member.send(JSON.stringify({ status: 'game-lost', forfeit: msg.forfeit }));
-        }
-      });
-      if (msg.forfeit) {
+      if (msg.result === 'forfeit') {
         // delete room
         rooms.delete(roomID);
       }
@@ -236,18 +331,18 @@ wss.on('connection', (ws) => {
         // find shared problem difficulties
         const difficultyIntersection = [...difficulties].filter(i => value.difficulty.has(i));
         // if room is not private, is not full, and matches difficulty criteria
-        if (!value.private && value.members.size === 1 && difficultyIntersection.length > 0) {
+        if (!value.private && value.members.length === 1 && difficultyIntersection.length > 0) {
           const roomID = key;
           // send room id back
           ws.send(JSON.stringify({ status: 'return-code', roomID, displayCode: false }));
           // add ws to room
-          rooms.get(roomID).members.add(ws);
+          rooms.get(roomID).members.push(new Player(ws, msg.elo, msg.email, msg.wins, msg.losses));
           // get leetcode problem url
           const difficulty = difficultyIntersection[0];
           const url = await fetchLeetcodeProblem(new Set([difficulty]));
           // broadcast game starting with problem url
           rooms.get(roomID).members.forEach((member) => {
-            member.send(JSON.stringify({ status: 'game-start', url, roomID }));
+            member.ws.send(JSON.stringify({ status: 'game-start', url, roomID }));
           });
           // delete room after 2 hours
           setTimeout(() => {
@@ -269,11 +364,11 @@ wss.on('connection', (ws) => {
       // send code back
       ws.send(JSON.stringify({ status: 'return-code', roomID, displayCode: false }));
       // create room and add to rooms map
-      rooms.set(roomID, { difficulty: difficulties, private: false, members: new Set([ws]), chat: new Set(), isGameFinished: false });
+      rooms.set(roomID, { difficulty: difficulties, private: false, members: [new Player(ws, msg.elo, msg.email, msg.wins, msg.losses)], chat: new Set(), isGameFinished: false });
       // delete room id from map after 10 minutes, if room is not full
       setTimeout(() => {
         // if room still exists after 1 hour not full
-        if (rooms.get(roomID) && rooms.get(roomID).members.size < 2) {
+        if (rooms.get(roomID) && rooms.get(roomID).members.length < 2) {
           // send message to client that room expired
           ws.send(JSON.stringify({ status: 'room-expired' }));
           rooms.delete(roomID);
@@ -286,6 +381,7 @@ wss.on('connection', (ws) => {
       const roomID = msg.roomID;
       // clear room id from map
       rooms.delete(roomID);
+      ws.close();
     }
 
     if (msg.status === 'join-chat') {
@@ -327,8 +423,8 @@ wss.on('connection', (ws) => {
       }
       // send message to other player
       rooms.get(roomID).members.forEach((member) => {
-        if (member !== ws) {
-          member.send(JSON.stringify({ status: 'request-shuffle' }));
+        if (member.ws !== ws) {
+          member.ws.send(JSON.stringify({ status: 'request-shuffle' }));
         }
       });
     }
@@ -351,19 +447,27 @@ wss.on('connection', (ws) => {
       }
       // send message to both players
       rooms.get(roomID).members.forEach((member) => {
-        member.send(JSON.stringify({ status: 'accept-shuffle', url }));
+        member.ws.send(JSON.stringify({ status: 'accept-shuffle', url }));
       });
     }
 
   });
 
-  ws.on('close', () => {
+  ws.on('close', (message) => {
     console.log('Client disconnected');
     // find room id that ws is in
     const roomList = [...rooms];
     let roomID = null;
+    let isGameDisconnect = false;
+
     for (let i = 0; i < roomList.length; i++) {
-      if (roomList[i][1].members.has(ws) || roomList[i][1].chat.has(ws)) {
+      roomList[i][1].members.forEach((member) => {
+        if (member.ws === ws) {
+          isGameDisconnect = true;
+        }
+      });
+
+      if (isGameDisconnect || roomList[i][1].chat.has(ws)) {
         roomID = roomList[i][0];
         break;
       }
@@ -373,16 +477,15 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    // if ws disconnected from game through extension
-    if (rooms.get(roomID).members.has(ws)) {
+    if (isGameDisconnect) {
       // if game ended through win/loss do nothing, since players could still be chatting
       if (rooms.get(roomID).isGameFinished) {
         return;
       }
       // if game ended through a player quitting, send message to other player and close room
       rooms.get(roomID).members.forEach((member) => {
-        if (member !== ws) {
-          member.send(JSON.stringify({ status: 'game-lost', forfeit: true }));
+        if (member.ws !== ws) {
+          member.ws.send(JSON.stringify({ status: 'game-lost', forfeit: true }));
           // delete room
           rooms.delete(roomID);
         }
@@ -404,8 +507,3 @@ wss.on('connection', (ws) => {
     }
   });
 });
-
-
-
-
-
