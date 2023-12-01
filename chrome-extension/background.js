@@ -55,32 +55,25 @@ function connect(message) {
     }
 
     if (response.status === 'game-won') {
-      // disconnect from server
-      disconnect();
-      // show you lose screen
-      chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=lose&roomID=' + roomID) });
-      // clear variables
-      url = null;
-      screen = null;
-      roomID = null;
-      shuffleStatus = null;
-    }
-
-    if (response.status === 'game-lost') {
-      // disconnect from server
-      disconnect();
-      // show screen depending on if player lost or forfeited
       if (response.forfeit) {
         chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=forfeit') });
       } else {
         // show you win screen
-        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win&roomID' + roomID) });
+        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win&roomID=' + roomID) });
       }
-      // clear variables
-      url = null;
-      screen = null;
-      roomID = null;
-      shuffleStatus = null;
+      disconnect();
+
+    }
+
+    if (response.status === 'game-lost') {
+      // if player forfeited, don't show you lose screen, just update stats
+      if (response.forfeit) {
+        chrome.runtime.sendMessage({ message: 'update-stats', elo: response.elo, wins: response.wins, losses: response.losses });
+        // otherwise, show you lose screen
+      } else {
+        chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=lose&roomID=' + roomID) });
+      }
+      disconnect();
     }
 
     if (response.status === 'room-expired') {
@@ -131,10 +124,14 @@ function connect(message) {
 }
 
 function disconnect() {
-  if (webSocket == null) {
-    return;
+  if (webSocket !== null) {
+    webSocket.close();
   }
-  webSocket.close();
+  webSocket = null;
+  roomID = null;
+  url = null;
+  screen = null;
+  shuffleStatus = null;
 }
 
 function keepAlive() {
@@ -154,11 +151,15 @@ function keepAlive() {
 
 
 function sendMessage(message) {
-  if (webSocket == null) {
-    connect(message);
-  } else {
-    webSocket.send(JSON.stringify(message));
-  }
+  chrome.storage.local.get(['profile'], (result) => {
+    const { profile } = result;
+    const profileDetails = {email: profile.email, elo: profile.elo, wins: profile.wins, losses: profile.losses};
+    if (webSocket == null) {
+      connect({...message, ...profileDetails});
+    } else {
+      webSocket.send(JSON.stringify({...message, ...profileDetails}));
+    }
+  });
 }
 
 // receive message from popup.js
@@ -177,24 +178,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (!roomID) {
       return;
     }
-    // open result page
-    chrome.tabs.create({ url: chrome.runtime.getURL('game-end-page.html?status=win&roomID=' + roomID) });
-    sendMessage({ status: 'game-won', roomID });
-    disconnect();
-    // clear variables
+    sendMessage({ status: 'game-end', roomID, result: 'win' });
     url = null;
-    screen = null;
-    roomID = null;
-    shuffleStatus = null;
   }
 
   if (request.message === 'forfeit') {
-    sendMessage({status: 'game-lost', roomID, forfeit: true});
-    roomID = null;
-    url = null;
-    screen = null;
-    shuffleStatus = null;
-    disconnect();
+    if (!roomID) {
+      return;
+    }
+    sendMessage({status: 'game-end', roomID, result: 'forfeit'});
   }
 
   if (request.message === 'play-online') {
@@ -202,19 +194,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.message === 'cancel-search') {
+    console.log('canceling search');
     sendMessage({status: 'cancel-search', roomID});
-    roomID = null;
-    url = null;
-    screen = null;
-    shuffleStatus = null;
-    disconnect();
   }
 
   if (request.message === 'end-session') {
-    url = null;
-    screen = null;
-    roomID = null;
-    shuffleStatus = null;
     disconnect();
   }
 
@@ -238,6 +222,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.message === 'test') {
     // respond with all details
-    sendResponse(JSON.stringify({ url, screen, roomID, webSocket: webSocket != null }));
+    sendResponse(JSON.stringify({ url, screen, roomID, webSocket: webSocket == null ? 'null': 'exists'}));
   }
 });

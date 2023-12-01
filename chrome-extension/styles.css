@@ -104,8 +104,9 @@ h2 {
 input:focus {
     outline: none;
 }
-input[type="text"] {
+input[type="text"], input[type="password"] {
     border: none;
+    margin: auto;
 }
 
 input[type="checkbox"] {
@@ -144,3 +145,12 @@ input[type="checkbox"] {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
+#email {
+    margin-top: 10px;
+}
+
+#password {
+    margin-top: 3px;
+    margin-bottom: 10px;
+}

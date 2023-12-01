@@ -9,18 +9,34 @@
     <div id="app">
         <button id="test-btn1">check game session</button>
         <button id="test-btn2">check server rooms</button>
+        <div id="auth" style="display: none; text-align: center;">
+            <div style="display: flex; justify-content: center;">
+                <img src="img/battle.png" alt="leetbattle" style="width: 30px;">
+                <h2>LeetBattle</h2>
+            </div>
+            <div>
+                <input type="text" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            <div>
+                <button id="login-btn" class="primary-btn">Login</button>
+                <button id="register-btn" class="secondary-btn">Signup</button>
+            </div>
+        </div>
         <div id="home">
             <div class="wrapper">
-                <div style="display: flex;">
+                <div style="display: flex; justify-content: center;">
                     <img src="img/battle.png" alt="leetbattle" style="width: 30px;">
                     <h2>LeetBattle</h2>
                 </div>
-                <p style="text-align: center;">
-                    <a style="color: white;" href="https://docs.google.com/forms/d/e/1FAIpQLSc2PRbTDMcAs7mX4hFaoiszXYoQY3Wz7_mJK0MAENb6WhHWOA/viewform?usp=sf_link" target="_blank">Give Feedback</a>
-                </p>
+                <p style="text-align: center;" id="elo">Fetching your elo</p>
+                <p style="text-align: center;" id="win-loss">Fetching your wins/losses</p>
                 <button id="visit-create-room-btn" class="secondary-btn">Create Room</button>
                 <button id="visit-join-room-btn" class="secondary-btn">Join Room</button>
                 <button id="visit-play-online-btn" class="primary-btn">Play Online</button>
+                <p style="text-align: center;">
+                    <a style="color: white;" href="https://docs.google.com/forms/d/e/1FAIpQLSc2PRbTDMcAs7mX4hFaoiszXYoQY3Wz7_mJK0MAENb6WhHWOA/viewform?usp=sf_link" target="_blank">Give Feedback</a>
+                </p>
             </div>
         </div>
 

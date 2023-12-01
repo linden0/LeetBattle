@@ -7,6 +7,61 @@ const API_URL = ENVIRONMENT === 'development' ? DEV_API_URL : PROD_API_URL;
 const savedScreens = ["enter-code", "room", "room-expired", "waiting-room"];
 
 document.addEventListener('DOMContentLoaded', function () {
+    // auth form
+    document.getElementById('login-btn').addEventListener('click', () => handleLoginRegister('login'));
+    document.getElementById('register-btn').addEventListener('click', () => handleLoginRegister('register'));
+    function handleLoginRegister(action) {
+        // get username and password from input
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        // validate username and password
+        if (email === '' || password === '') {
+            alert('Please enter a username and password');
+            return;
+        }
+        if (action == 'register') {
+            // validate email
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            // validate password length
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+        }
+        // send request to backend
+        fetch(`${API_URL}/${action}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        })
+            .then(res => res.json())
+            .then(data => {
+                // if error, alert error
+                if (data.error) {
+                    alert(data.message);
+                    return;
+                }
+                // if success, save token to local storage
+                localStorage.setItem('token', data.token);
+                // save email and elo to local storage
+                chrome.storage.local.set({ profile: {email: data.email, elo: data.elo, wins: data.wins, losses: data.losses }});
+                // popuplate field data
+                document.getElementById('elo').innerText = data.elo + ' ELO';
+                document.getElementById('win-loss').innerText = `${data.wins} W - ${data.losses} L`;
+                // show home screen
+                showScreen('home');
+                // clear input fields
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+            })
+            .catch(err => console.log(err));
+    };
 
     // capitalize letters when entering room code
     document.getElementById('room-code').addEventListener('input', function () {
@@ -26,9 +81,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // if on enter code page, send message to background.js to delete room
             if (document.getElementById('enter-code').style.display === 'block') {
                 chrome.runtime.sendMessage({ message: 'cancel-search' });
+            } else {
+                // else, send message to background.js to end session
+                chrome.runtime.sendMessage({ message: 'end-session' });
             }
-            // end session and disconnect
-            chrome.runtime.sendMessage({ message: 'end-session' });
             showScreen('home');
         });
     }
@@ -42,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('test-btn2').addEventListener('click', async () => {
         fetch(`${API_URL}/test`)
             .then(res => res.json())
-            .then(data => alert(data.message))
+            .then(data => console.log(data))
             .catch(err => console.log(err));
     });
     
@@ -164,52 +220,85 @@ document.addEventListener('DOMContentLoaded', function () {
 //     "code": "123456"
 // }
 function renderScreens() {
-    // get screen from background script
-    try {
-        chrome.runtime.sendMessage({ message: 'get-session-details' }, function (response) {
-            if (!response.shuffleStatus) {
-                // hide shuffle button, accept button, and room status
-                document.getElementById('request-shuffle-btn').style.display = 'none';
-                document.getElementById('accept-shuffle-btn').style.display = 'none';
-                document.getElementById('room-status').style.display = 'none';
-                // show shuffle button
-                document.getElementById('request-shuffle-btn').style.display = 'block';
-            }
-            else if (response.shuffleStatus === 'accept-shuffle') {
-                // hide shuffle button, accept button, and room status
-                document.getElementById('request-shuffle-btn').style.display = 'none';
-                document.getElementById('accept-shuffle-btn').style.display = 'none';
-                document.getElementById('room-status').style.display = 'none';
-                // show accept button
-                document.getElementById('accept-shuffle-btn').style.display = 'block';
-                document.getElementById('room-status').innerText = "Your opponent doesn't like this problem. Wanna shuffle?";
-                document.getElementById('room-status').style.display = 'block';
-            }
-            else if (response.shuffleStatus === 'shuffle-requested') {
-                // hide shuffle button, accept button, and room status
-                document.getElementById('request-shuffle-btn').style.display = 'none';
-                document.getElementById('accept-shuffle-btn').style.display = 'none';
-                document.getElementById('room-status').style.display = 'none';
-                // show room status
-                document.getElementById('room-status').innerText = 'Waiting for your opponent to accept shuffle request...';
-                document.getElementById('room-status').style.display = 'block';
-            }
+    // check local storage for auth jwt token
+    const token = localStorage.getItem('token');
+    // if not found, show auth screen
+    if (!token) {
+        showScreen('auth');
+        return;
+    }
+    // validate token thru backend
+    fetch(`${API_URL}/auth-check`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.isValid) {
+                // save email and elo to local storage
+                chrome.storage.local.set({ profile: {email: data.email, elo: data.elo, wins: data.wins, losses: data.losses }});
+                // populate field data
+                document.getElementById('elo').innerText = data.elo + ' ELO';
+                document.getElementById('win-loss').innerText = `${data.wins} W - ${data.losses} L`;
+                // get screen from background script
+                try {
+                    chrome.runtime.sendMessage({ message: 'get-session-details' }, function (response) {
+                        if (!response.shuffleStatus) {
+                            // hide shuffle button, accept button, and room status
+                            document.getElementById('request-shuffle-btn').style.display = 'none';
+                            document.getElementById('accept-shuffle-btn').style.display = 'none';
+                            document.getElementById('room-status').style.display = 'none';
+                            // show shuffle button
+                            document.getElementById('request-shuffle-btn').style.display = 'block';
+                        }
+                        else if (response.shuffleStatus === 'accept-shuffle') {
+                            // hide shuffle button, accept button, and room status
+                            document.getElementById('request-shuffle-btn').style.display = 'none';
+                            document.getElementById('accept-shuffle-btn').style.display = 'none';
+                            document.getElementById('room-status').style.display = 'none';
+                            // show accept button
+                            document.getElementById('accept-shuffle-btn').style.display = 'block';
+                            document.getElementById('room-status').innerText = "Your opponent doesn't like this problem. Wanna shuffle?";
+                            document.getElementById('room-status').style.display = 'block';
+                        }
+                        else if (response.shuffleStatus === 'shuffle-requested') {
+                            // hide shuffle button, accept button, and room status
+                            document.getElementById('request-shuffle-btn').style.display = 'none';
+                            document.getElementById('accept-shuffle-btn').style.display = 'none';
+                            document.getElementById('room-status').style.display = 'none';
+                            // show room status
+                            document.getElementById('room-status').innerText = 'Waiting for your opponent to accept shuffle request...';
+                            document.getElementById('room-status').style.display = 'block';
+                        }
 
-            if (response.screen) {
-                if (response.screen === 'enter-code') {
-                    // display code
-                    document.getElementById('room-code-display').value = response.roomID;
+                        if (response.screen) {
+                            if (response.screen === 'enter-code') {
+                                // display code
+                                document.getElementById('room-code-display').value = response.roomID;
+                            }
+                            showScreen(response.screen);
+                        } else {
+                            showScreen('home');
+                        }
+                    });
                 }
-                showScreen(response.screen);
+                catch(e) {
+                    console.log(e)
+                    showScreen('home');
+                }
             } else {
-                showScreen('home');
+                // show auth screen
+                showScreen('auth');
             }
+        })
+        .catch(err => {
+            // show auth screen
+            showScreen('auth');
         });
-    }
-    catch(e) {
-        console.log(e)
-        showScreen('home');
-    }
+    
 
 }
 
@@ -226,6 +315,7 @@ function showScreen(screen) {
 
 // close all screens
 function closeScreens() {
+    document.getElementById('auth').style.display = "none";
     document.getElementById('home').style.display = "none";
     document.getElementById('create-room').style.display = "none";
     document.getElementById('join-room').style.display = "none";
@@ -259,6 +349,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         document.getElementById('accept-shuffle-btn').style.display = 'block';
         document.getElementById('room-status').innerText = "Your opponent doesn't like this problem. Wanna shuffle?";
         document.getElementById('room-status').style.display = 'block';
+    }
+    if (request.message === 'update-stats') {
+        // update elo and win-loss
+        document.getElementById('elo').innerText = request.elo + ' ELO';
+        document.getElementById('win-loss').innerText = `${request.wins} W - ${request.losses} L`;
     }
 });
 
